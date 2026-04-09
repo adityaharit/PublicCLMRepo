@@ -396,7 +396,7 @@ th,td{vertical-align:top;padding:clamp(0.35rem,1vh,0.6rem) clamp(0.45rem,1vw,0.8
             <tr><td><strong>E1 &mdash; Identity &amp; Access</strong></td><td>Log in as each of the four roles; show forbidden actions hidden in UI and blocked at API level; provision and deactivate a test user</td></tr>
             <tr><td><strong>E2 &mdash; Contract Repository</strong></td><td>Upload a contract, attach metadata, search and locate it by keyword/filter, view the unified Contract Detail page with all tabs</td></tr>
             <tr><td><strong>E3 &mdash; Lifecycle &amp; Audit</strong></td><td>Walk a contract from Draft &#8594; In Review &#8594; Approved &#8594; Executed; trigger automatic expiry; show the immutable audit log with every action in plain language</td></tr>
-            <tr><td><strong>E4 &mdash; Template Builder</strong></td><td>Browse the template library, fill the variable form for an NDA, generate a compliant PDF/DOCX in under 2 minutes and watch it land as a Draft record</td></tr>
+            <tr><td><strong>E4 &mdash; Template Builder</strong></td><td>Browse the template library, fill the variable form for an NDA, generate a compliant PDF/DOCX quickly and watch it land as a Draft record</td></tr>
             <tr><td><strong>E5 &mdash; Approval Workflows</strong></td><td>Submit a contract for approval, approve Stage 1, reject Stage 2 with a comment, show the chain halting and owner notified; resubmit from Draft</td></tr>
             <tr><td><strong>E6 &mdash; Approver Experience</strong></td><td>Show the priority inbox sorted by SLA urgency; configure an OOO delegation with a date range; demonstrate a request redirecting to the delegate with correct audit labelling</td></tr>
             <tr><td><strong>E7 &mdash; Portfolio Dashboard</strong></td><td>Show live vendor exposure cards, click a status on the chart to filter the library, review the 0&ndash;30 day expiry bucket, export a filtered PDF report</td></tr>
@@ -423,8 +423,8 @@ th,td{vertical-align:top;padding:clamp(0.35rem,1vh,0.6rem) clamp(0.45rem,1vw,0.8
             <thead><tr><th style="width:5%">ID</th><th style="width:20%">Topic</th><th>Question</th><th style="width:8%">Owner</th></tr></thead>
             <tbody>
               <tr><td>P0-5</td><td><strong>Approved &#8594; Executed</strong></td><td>Which role triggers this state transition? Is it a manual button action or automatic on external confirmation?</td><td>[Client]</td></tr>
-              <tr><td>P2-5</td><td><strong>Template Upload Metadata</strong></td><td>What are the required metadata fields for template upload?</td><td>Product</td></tr>
-              <tr><td>P2-7</td><td><strong>OOO Delegation Deadlock</strong></td><td>If delegate User B also goes OOO and cannot sub-delegate, who resolves stalled approvals &mdash; Admin escalation or automatic alert?</td><td>Client</td></tr>
+              <tr><td>P2-5</td><td><strong>Template Upload Metadata</strong></td><td>What are the required metadata fields for template upload?</td><td>[Client]</td></tr>
+              <tr><td>P2-7</td><td><strong>OOO Delegation Deadlock</strong></td><td>If delegate User B also goes OOO and cannot sub-delegate, who resolves stalled approvals &mdash; Admin escalation or automatic alert?</td><td>[Client]</td></tr>
             </tbody>
           </table>
         </div>
@@ -473,7 +473,7 @@ th,td{vertical-align:top;padding:clamp(0.35rem,1vh,0.6rem) clamp(0.45rem,1vw,0.8
             <thead><tr><th>Action</th><th style="text-align:center">Viewer</th><th style="text-align:center">Procurement</th><th style="text-align:center">Legal</th><th style="text-align:center">Admin</th></tr></thead>
             <tbody>
               <tr><td>Log in</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
-              <tr><td>View granted contracts</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>View granted contracts and comment</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
               <tr><td>Upload / edit metadata</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
               <tr><td>Generate contract from template</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
               <tr><td>Initiate approval workflow</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
@@ -513,7 +513,7 @@ th,td{vertical-align:top;padding:clamp(0.35rem,1vh,0.6rem) clamp(0.45rem,1vw,0.8
             <div class="story-tab-panel" data-panel="s1-4">
               <h4 class="story-title">User Account Provisioning &amp; Off-boarding</h4>
               <p class="story-lbl">User Story</p><p class="story-us">As an Admin, I want to provision or deactivate user accounts so that system access stays synchronised with employment status.</p>
-              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Admin creates accounts with name, email, and role; 48-hour invite link sent automatically</li><li>Deactivated users cannot log in; their names persist on all historical records</li><li>All account lifecycle events (create, role change, deactivate) logged</li></ul>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Admin creates accounts with name, email, and role; 24-hour invite link sent automatically</li><li>Deactivated users cannot log in; their names persist on all historical records</li><li>All account lifecycle events (create, role change, deactivate) logged</li></ul>
               <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Expired invite:</strong> System displays clear message directing user to request a new link from Admin</p>
             </div>
           </div>
@@ -572,7 +572,7 @@ th,td{vertical-align:top;padding:clamp(0.35rem,1vh,0.6rem) clamp(0.45rem,1vw,0.8
             <div class="story-tab-panel" data-panel="s2-2">
               <h4 class="story-title">Contract Metadata Capture</h4>
               <p class="story-lbl">User Story</p><p class="story-us">As a Procurement User or above, I want to attach structured metadata to a contract so that agreements are consistently tagged and searchable.</p>
-              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Required fields: Name, Type, Status (defaults to Draft), Vendor/Counterparty, Start Date, Total Value</li><li>Optional fields: End Date, Currency</li><li>Every metadata edit logs the field name, old value, new value, user, and timestamp</li></ul>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Required fields: Name, Type, Status (defaults to Draft), Vendor/Counterparty, Start Date, Total Value, Currency </li><li>Optional fields: End Date, Approver</li><li>Every metadata edit logs the field name, old value, new value, user, and timestamp</li></ul>
               <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Chronology error:</strong> Form validation blocks submission if End Date is before Start Date</p>
             </div>
             <div class="story-tab-panel" data-panel="s2-3">
