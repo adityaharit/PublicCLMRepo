@@ -195,7 +195,7 @@ Each Epic delivers a usable, testable increment of the platform. No Epic leaves 
 - All state changes logged (from-state, to-state, user, time).
 **Edge Cases:**
 - *Concurrency:* If two authorised users transition a state simultaneously, the system processes the first and returns a "State already updated" message to the second.
-**Open Question (P0-5):** Which role triggers the Approved → Executed transition? Is it a manual button action by a specific role, or is it triggered automatically by an external signal (e.g., PO system confirmation)? *Owner: S-AI*
+**Open Question (P0-5):** Which role triggers the Approved → Executed transition? Is it a manual button action by a specific role, or is it triggered automatically by an external signal (e.g., PO system confirmation)? *Owner: [Client]*
 
 #### Story 3.2 — Terminated / Cancelled State `6 pts`
 **User Story:** As a **Legal Ops User or Admin**, I want to transition a contract to Terminated/Cancelled with a recorded reason, so that I can remove it from active workflows without losing its history.
