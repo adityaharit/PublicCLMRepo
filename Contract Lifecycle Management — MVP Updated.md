@@ -52,19 +52,10 @@ The **Contract Owner** is the user who uploads a contract record to the platform
 - **Legal / Legal Ops:** Needs to govern approved templates, initiate approval workflows, and manage lifecycle exceptions. Their goal is to maintain the organisation's legal language and enforce compliance. Template management (upload, version, archive) is available to the Legal role and to the Legal Ops Lead designation.
 - **The Administrator:** Requires full access to manage user provisioning, configure approval workflows, and handle overrides (e.g., unlocking approved contracts). Their goal is to maintain system continuity and an immutable audit trail.
 
-### MVP Success Metrics (KPIs)
-| Goal | Key Performance Indicator (KPI) |
-|---|---|
-| **Adopt the Repository** | 100% of new vendor contracts are uploaded to the platform post-go-live. |
-| **Accelerate Approvals** | 80% reduction in approval SLA breaches compared to the previous email-based process. |
-| **Standardise Language** | 90% of routine NDAs, MSAs, and SOWs are generated natively via the Template Builder. |
-| **Proactive Renewals** | Zero instances of auto-renewing contracts lapsing unintentionally. |
-
 ### Non-Functional Requirements (NFRs)
 - **Performance:** The Contract Detail page must load within 3 seconds for documents up to 25MB. State transitions and notifications must execute within 60 seconds.
 - **Security & Identity:** Access must be gated via SSO with session timeouts for inactivity. Role boundaries must be enforced at the server API level, not merely obscured in the UI.
 - **Data Integrity:** The platform must maintain a permanently uneditable audit log across all roles.
-- **Availability:** Target 99.9% uptime during standard business hours to prevent blocking procurement or legal operations.
 
 ### Risks & Mitigations
 - **Risk:** Low user adoption if the system feels slower than email.
