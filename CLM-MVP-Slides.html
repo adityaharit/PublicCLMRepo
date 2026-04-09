@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contract Lifecycle Management — MVP</title>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,800&display=swap">
+<style>
+@font-face{font-family:'Graphik';src:local('Graphik'),local('Graphik-Regular'),local('GraphikRegular');font-weight:400;font-style:normal;}
+@font-face{font-family:'Graphik';src:local('Graphik Medium'),local('Graphik-Medium'),local('GraphikMedium');font-weight:500;font-style:normal;}
+@font-face{font-family:'Graphik';src:local('Graphik Semibold'),local('Graphik-Semibold'),local('GraphikSemibold');font-weight:600 700;font-style:normal;}
+@font-face{font-family:'Graphik';src:local('Graphik Bold'),local('Graphik-Bold'),local('GraphikBold');font-weight:800;font-style:normal;}
+</style>
+<style>
+:root{
+  --acn-purple:#A100FF;--acn-dark-purple:#7500C0;--acn-deep-purple:#460073;
+  --acn-mauve:#B455AA;--acn-light-purple:#BE82FF;--acn-pale-purple:#DCAFFF;
+  --acn-black:#000000;--acn-white:#FFFFFF;--acn-gray:#96968C;--acn-light-gray:#E6E6DC;
+  --bg-dark:var(--acn-black);--bg-light:var(--acn-white);--bg-section:var(--acn-deep-purple);
+  --text-on-dark:var(--acn-white);--text-on-light:var(--acn-black);--text-muted:var(--acn-gray);
+  --accent-rule:var(--acn-purple);
+  --font-primary:'Graphik','Satoshi',-apple-system,BlinkMacSystemFont,sans-serif;
+  --type-display:clamp(3rem,8vw,7rem);--type-h1:clamp(2rem,5vw,4rem);
+  --type-h2:clamp(1.5rem,3.5vw,2.5rem);--type-h3:clamp(1.1rem,2vw,1.55rem);
+  --type-body:clamp(0.9rem,1.2vw,1rem);--type-small:clamp(0.68rem,0.9vw,0.8rem);
+  --slide-padding-x:clamp(1.2rem,4vw,3.8rem);--slide-padding-y:clamp(1rem,3vh,2.2rem);
+  --canvas-gap:clamp(0.6rem,1.2vh,1rem);--radius-card:12px;
+  --space-1:clamp(0.25rem,0.4vw,0.35rem);--space-2:clamp(0.4rem,0.6vw,0.55rem);
+  --space-3:clamp(0.6rem,0.9vw,0.8rem);--space-4:clamp(0.8rem,1.2vw,1rem);
+  --space-5:clamp(1rem,1.6vw,1.35rem);--space-6:clamp(1.25rem,2vw,1.75rem);
+  --radius-sm:8px;--radius-md:12px;--radius-lg:18px;--radius-pill:999px;
+  --border-subtle:1px solid rgba(161,0,255,0.12);--border-strong:1px solid rgba(161,0,255,0.28);
+  --border-muted:1px solid rgba(0,0,0,0.08);
+  --fill-card:rgba(255,255,255,0.96);--fill-soft:rgba(161,0,255,0.05);
+  --fill-strong:rgba(161,0,255,0.12);--fill-dark-card:rgba(255,255,255,0.06);
+  --shadow-card:0 2px 10px rgba(0,0,0,0.04);--shadow-strong:0 10px 28px rgba(70,0,115,0.12);
+  --type-kicker:clamp(0.62rem,0.85vw,0.74rem);--type-label:clamp(0.68rem,0.95vw,0.8rem);
+  --type-body-sm:clamp(0.78rem,1vw,0.9rem);--type-body-md:clamp(0.9rem,1.2vw,1rem);
+  --type-title-sm:clamp(1rem,1.5vw,1.2rem);--type-title-md:clamp(1.15rem,1.8vw,1.4rem);
+  --type-metric:clamp(1.8rem,3.4vw,3rem);
+  --state-highlight-border:1px solid rgba(161,0,255,0.35);--state-highlight-fill:rgba(161,0,255,0.1);
+  --state-positive-border:1px solid rgba(49,142,93,0.38);--state-positive-fill:rgba(49,142,93,0.1);
+  --state-risk-border:1px solid rgba(196,72,72,0.34);--state-risk-fill:rgba(196,72,72,0.1);
+  --state-neutral-border:1px solid rgba(150,150,140,0.3);--state-neutral-fill:rgba(150,150,140,0.12);
+  --ease-out-expo:cubic-bezier(0.16,1,0.3,1);
+  --duration-fast:0.3s;--duration-normal:0.5s;--duration-slow:0.7s;
+}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow-x:hidden;background:var(--bg-light);color:var(--text-on-light);font-family:var(--font-primary);text-align:left;}
+html{scroll-snap-type:y mandatory;scroll-behavior:smooth;}
+.slide{position:relative;width:100vw;height:100vh;height:100dvh;overflow:hidden;scroll-snap-align:start;background:var(--bg-light);color:var(--text-on-light);}
+.slide-content{height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:flex-start;gap:var(--canvas-gap);padding:var(--slide-padding-y) var(--slide-padding-x) calc(var(--slide-padding-y) + 2rem);}
+.slide-canvas{flex:1;min-height:0;display:flex;flex-direction:column;gap:var(--space-3);}
+.content-light-slide{background:var(--bg-light);color:var(--text-on-light);}
+@media(max-height:760px){:root{--slide-padding-x:clamp(1rem,3vw,2rem);--slide-padding-y:clamp(0.8rem,2vh,1.4rem);}}
+.slide-subtitle{margin:0;font-size:var(--type-small);font-weight:700;line-height:1.15;letter-spacing:0.08em;text-transform:uppercase;color:var(--acn-deep-purple);}
+.hero-statement{margin:0;width:100%;font-size:clamp(1.5rem,2.6vw,2.2rem);font-weight:800;line-height:1.25;color:var(--text-on-light);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.accent-bar{width:clamp(72px,10vw,140px);height:3px;background:var(--accent-rule);transform-origin:left center;}
+.meta-badge{display:inline-flex;align-items:center;gap:0.35rem;padding:0.16em 0.55em;border-radius:999px;font-size:clamp(0.58rem,0.8vw,0.72rem);font-weight:700;white-space:nowrap;}
+table{width:100%;border-collapse:collapse;font-size:clamp(0.78rem,1.2vw,0.95rem);}
+th,td{vertical-align:top;padding:clamp(0.35rem,1vh,0.6rem) clamp(0.45rem,1vw,0.8rem);}
+.tbl th{background:var(--acn-deep-purple);color:#fff;font-weight:700;font-size:var(--type-label);text-transform:uppercase;letter-spacing:0.05em;border-bottom:none;}
+.tbl td{border-bottom:1px solid rgba(0,0,0,0.07);font-size:var(--type-body-sm);}
+.tbl tr:last-child td{border-bottom:none;}
+.comp-card{background:#F7F7F7;border:1px solid rgba(0,0,0,0.10);border-radius:var(--radius-md);box-shadow:0 2px 8px rgba(0,0,0,0.06);padding:var(--space-4);}
+.comp-kicker{margin:0 0 var(--space-2) 0;font-size:var(--type-kicker);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--acn-deep-purple);}
+.comp-body{margin:0;font-size:var(--type-body-sm);line-height:1.45;color:var(--text-on-light);}
+.acn-icon{width:1.4em;height:1.4em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.takeaway-banner{display:grid;grid-template-columns:auto 1fr;gap:var(--space-4);align-items:center;padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);border:var(--state-highlight-border);background:var(--state-highlight-fill);}
+.takeaway-banner-label{margin:0;font-size:var(--type-kicker);font-weight:800;letter-spacing:0.08em;text-transform:uppercase;}
+.takeaway-banner-text{margin:0;font-size:var(--type-body-md);font-weight:600;line-height:1.35;}
+.slide-footer{position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;gap:var(--space-3);padding:0.45rem var(--slide-padding-x);border-top:1px solid rgba(0,0,0,0.07);font-size:var(--type-kicker);color:var(--acn-gray);background:transparent;}
+.slide-footer-chevron{width:16px;height:16px;flex-shrink:0;}
+.slide-footer-source{flex:1;}
+.slide-footer-page{margin-left:auto;font-weight:700;color:var(--acn-gray);}
+.edit-mode [contenteditable]{outline:1px dashed rgba(161,0,255,0.55);cursor:text;}
+.edit-mode [contenteditable]:focus{outline:2px solid var(--acn-purple);background:rgba(161,0,255,0.05);}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity var(--duration-normal) var(--ease-out-expo),transform var(--duration-normal) var(--ease-out-expo);}
+.slide.active .reveal,.visible .reveal{opacity:1;transform:translateY(0);}
+.reveal-fade{opacity:0;transition:opacity var(--duration-slow) ease;}
+.slide.active .reveal-fade,.visible .reveal-fade{opacity:1;}
+.accent-bar.reveal{transform:scaleX(0);transform-origin:left center;transition:transform var(--duration-slow) var(--ease-out-expo),opacity var(--duration-fast) ease;}
+.slide.active .accent-bar.reveal,.visible .accent-bar.reveal{transform:scaleX(1);}
+#deck-chrome{position:fixed;right:1rem;bottom:1rem;z-index:300;display:flex;align-items:center;gap:0.35rem;padding:0.35rem 0.55rem;background:rgba(0,0,0,0.72);border:1px solid rgba(161,0,255,0.28);border-radius:999px;backdrop-filter:blur(8px);}
+#deck-chrome button{border:none;background:none;color:#fff;cursor:pointer;border-radius:4px;padding:0.2rem 0.35rem;font-size:0.95rem;line-height:1;transition:color 0.2s ease,background 0.2s ease;}
+#deck-chrome button:hover{color:var(--acn-purple);background:rgba(161,0,255,0.14);}
+#deck-counter{min-width:4.8rem;text-align:center;color:#fff;font-family:var(--font-primary);font-size:clamp(0.72rem,0.95vw,0.82rem);font-weight:700;letter-spacing:0.04em;}
+@page{size:1920px 1080px;margin:0;}
+@media print{
+  html{scroll-snap-type:none!important;scroll-behavior:auto!important;height:auto!important;overflow:visible!important;}
+  body{overflow:visible!important;height:auto!important;width:100%!important;}
+  .slide{width:100%!important;height:100vh!important;min-height:unset!important;page-break-after:always;break-after:page;page-break-inside:avoid;break-inside:avoid;overflow:hidden!important;position:relative!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  .slide-content{overflow:hidden!important;max-height:none!important;}
+  .reveal,.reveal-fade{opacity:1!important;transform:none!important;visibility:visible!important;transition:none!important;}
+  .accent-bar.reveal{transform:scaleX(1)!important;}
+  #deck-chrome{display:none!important;}
+}
+@media(prefers-reduced-motion:reduce){
+  .reveal,.reveal-fade,.accent-bar.reveal{opacity:1!important;transform:none!important;transition:none!important;}
+  html{scroll-behavior:auto!important;}
+}
+
+/* COVER */
+.cover-slide{background:var(--acn-deep-purple);color:var(--acn-white);}
+.cover-content{height:100%;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:var(--slide-padding-y) var(--slide-padding-x);gap:var(--space-4);}
+.cover-eyebrow{font-size:var(--type-small);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--acn-light-purple);margin:0;}
+.cover-title{margin:0;font-size:clamp(2.8rem,6vw,5.5rem);font-weight:800;line-height:1.05;color:var(--acn-white);}
+.cover-title span{color:var(--acn-purple);}
+.cover-subtitle{margin:0;font-size:var(--type-h3);font-weight:500;color:var(--acn-pale-purple);}
+.cover-accent{width:clamp(72px,10vw,140px);height:3px;background:var(--acn-purple);}
+.cover-stats{display:flex;gap:var(--space-5);align-items:center;}
+.cover-stat{display:flex;flex-direction:column;gap:var(--space-1);}
+.cover-stat-value{font-size:clamp(2rem,4vw,3.2rem);font-weight:800;color:var(--acn-purple);line-height:1;}
+.cover-stat-label{font-size:var(--type-small);color:var(--acn-pale-purple);text-transform:uppercase;letter-spacing:0.06em;font-weight:600;}
+.cover-divider{width:1px;height:3rem;background:rgba(255,255,255,0.15);}
+.cover-meta{display:flex;gap:var(--space-4);align-items:center;font-size:var(--type-small);color:rgba(255,255,255,0.45);}
+
+/* PROBLEM */
+.problem-grid{display:grid;grid-template-columns:1fr;gap:var(--space-3);flex:1;min-height:0;}
+.problem-card{display:flex;align-items:center;gap:var(--space-4);padding:var(--space-4);border-radius:var(--radius-md);border:var(--border-subtle);background:var(--fill-soft);}
+.problem-icon{width:2.4rem;height:2.4rem;display:flex;align-items:center;justify-content:center;background:var(--acn-deep-purple);border-radius:var(--radius-sm);color:white;flex-shrink:0;}
+.problem-icon .acn-icon{width:1.1em;height:1.1em;}
+.problem-quote{font-size:var(--type-title-sm);font-weight:600;line-height:1.3;color:var(--text-on-light);font-style:italic;margin:0;}
+
+/* LIFECYCLE */
+.lifecycle-stages{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-3);align-items:start;}
+.lifecycle-stage{display:flex;flex-direction:column;align-items:center;gap:var(--space-2);}
+.lifecycle-stage-icon{width:3.8rem;height:3.8rem;border-radius:var(--radius-md);background:var(--acn-deep-purple);display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;}
+.lifecycle-stage-icon .acn-icon{width:1.5em;height:1.5em;}
+.lifecycle-stage-box{width:100%;padding:var(--space-3) var(--space-2);border-radius:var(--radius-md);text-align:center;font-weight:700;font-size:var(--type-label);background:var(--acn-deep-purple);color:white;box-sizing:border-box;}
+.lifecycle-stage-desc{font-size:var(--type-kicker);line-height:1.35;color:var(--acn-gray,#6b6b6b);text-align:center;margin:0;padding:0 var(--space-1);}
+.integration-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);}
+.integration-item{display:flex;flex-direction:column;gap:var(--space-3);padding:var(--space-4);border-radius:var(--radius-md);background:var(--fill-soft);border:var(--border-subtle);}
+.integration-icon-row{display:flex;align-items:center;gap:var(--space-3);}
+.integration-icon{width:2.8rem;height:2.8rem;border-radius:var(--radius-sm);background:var(--acn-deep-purple);display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;}
+.integration-icon .acn-icon{width:1.15em;height:1.15em;}
+.integration-label{font-size:var(--type-label);font-weight:700;letter-spacing:0.04em;color:var(--acn-deep-purple);}
+.integration-dir{font-size:var(--type-kicker);font-weight:700;color:var(--acn-purple);text-transform:uppercase;letter-spacing:0.06em;}
+.integration-arrow{display:flex;align-items:flex-start;gap:var(--space-2);font-size:var(--type-body-sm);line-height:1.4;}
+
+/* EPIC LAYOUT */
+.epic-layout{display:flex;flex-direction:column;gap:var(--space-3);flex:1;min-height:0;}
+.epic-pts-total{font-size:var(--type-kicker);font-weight:700;color:var(--acn-deep-purple);background:rgba(161,0,255,0.1);border:1px solid rgba(161,0,255,0.25);border-radius:999px;padding:0.2em 0.65em;margin-left:var(--space-2);}
+
+/* STORY TABS */
+.story-tabs{display:flex;flex-direction:column;flex:1;min-height:0;border:var(--border-subtle);border-radius:var(--radius-md);overflow:hidden;}
+.story-tab-strip{display:flex;background:var(--fill-soft);border-bottom:2px solid rgba(161,0,255,0.15);flex-shrink:0;overflow-x:auto;}
+.story-tab-strip::-webkit-scrollbar{height:0;}
+.story-tab-btn{padding:var(--space-2) var(--space-4);font-size:var(--type-body-sm);font-weight:600;color:var(--text-muted);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer;transition:color 0.2s,border-color 0.2s,background 0.2s;white-space:nowrap;font-family:var(--font-primary);}
+.story-tab-btn:hover{color:var(--acn-deep-purple);background:rgba(161,0,255,0.05);}
+.story-tab-btn.active{color:var(--acn-deep-purple);border-bottom-color:var(--acn-purple);font-weight:700;background:white;}
+.story-tab-panels{flex:1;min-height:0;position:relative;background:white;}
+.story-tab-panel{display:none;height:100%;overflow-y:auto;padding:var(--space-4);box-sizing:border-box;}
+.story-tab-panel.active{display:block;}
+.story-tab-panel::-webkit-scrollbar{width:4px;}
+.story-tab-panel::-webkit-scrollbar-thumb{background:rgba(161,0,255,0.2);border-radius:2px;}
+.story-pts{display:inline-flex;align-items:center;padding:0.15em 0.55em;border-radius:999px;font-size:var(--type-kicker);font-weight:700;background:rgba(161,0,255,0.1);color:var(--acn-deep-purple);border:1px solid rgba(161,0,255,0.25);margin-left:0.4em;}
+.story-title{font-size:var(--type-title-sm);font-weight:700;color:var(--acn-deep-purple);margin:0 0 var(--space-3) 0;}
+.story-lbl{font-size:var(--type-kicker);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--acn-deep-purple);margin:0 0 var(--space-2) 0;}
+.story-us{font-size:var(--type-body-sm);line-height:1.5;font-style:italic;margin:0 0 var(--space-3) 0;padding:var(--space-3);background:var(--fill-soft);border-left:3px solid var(--acn-purple);border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+.story-list{margin:0 0 var(--space-3) 0;padding-left:1.2em;display:grid;gap:var(--space-2);font-size:var(--type-body-sm);line-height:1.5;}
+.story-edge{font-size:var(--type-body-sm);line-height:1.5;margin:0;padding:var(--space-3);background:rgba(196,130,0,0.08);border-left:3px solid rgba(196,130,0,0.45);border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
+.story-edge strong{color:#a06c00;font-weight:700;}
+.rbac-y{color:#1d7a4a;font-weight:700;text-align:center;}
+.rbac-n{color:var(--acn-gray);text-align:center;}
+
+/* STATE MACHINE */
+.state-machine{display:flex;align-items:center;gap:var(--space-2);padding:var(--space-3);background:var(--fill-soft);border-radius:var(--radius-md);border:var(--border-subtle);flex-wrap:wrap;}
+.state-box{padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);font-size:var(--type-body-sm);font-weight:700;border:2px solid;text-align:center;}
+.state-active{background:var(--fill-soft);border-color:var(--acn-purple);color:var(--acn-deep-purple);}
+.state-locked{background:rgba(70,0,115,0.08);border-color:var(--acn-deep-purple);color:var(--acn-deep-purple);}
+.state-terminal{background:var(--state-risk-fill);border-color:rgba(196,72,72,0.45);color:#8B0000;}
+.state-arrow{color:var(--acn-gray);font-weight:700;font-size:1.1rem;}
+
+/* FLOW STEPS */
+.flow-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--space-2);}
+.flow-step{display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--space-2);position:relative;}
+.flow-step:not(:last-child)::after{content:'\2192';position:absolute;right:calc(-1*var(--space-3));top:0.85rem;color:var(--acn-purple);font-weight:700;font-size:1rem;}
+.flow-num{width:1.9rem;height:1.9rem;border-radius:50%;background:var(--acn-deep-purple);color:white;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.82rem;flex-shrink:0;}
+.flow-label{font-size:var(--type-body-sm);font-weight:700;color:var(--acn-deep-purple);line-height:1.2;}
+.flow-desc{font-size:var(--type-label);color:var(--text-muted);line-height:1.4;}
+
+/* WORKFLOW */
+.workflow-wrap{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);}
+.wf-card{padding:var(--space-3);background:var(--fill-soft);border-radius:var(--radius-md);border:var(--border-subtle);}
+.wf-lbl{font-size:var(--type-kicker);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--acn-deep-purple);margin:0 0 var(--space-3) 0;}
+.wf-chain{display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;}
+.wf-stage{padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);font-size:var(--type-label);font-weight:700;border:2px solid var(--acn-purple);background:white;color:var(--acn-deep-purple);display:flex;flex-direction:column;align-items:center;gap:0.15rem;}
+.wf-sla{font-size:0.58rem;font-weight:600;color:var(--text-muted);}
+.wf-arr{color:var(--acn-purple);font-weight:700;}
+.wf-parallel{border:2px dashed rgba(161,0,255,0.3);border-radius:var(--radius-md);padding:var(--space-2);display:flex;flex-direction:column;gap:var(--space-2);}
+
+/* INBOX / OOO */
+.inbox-wrap{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);}
+.inbox-mock{background:var(--fill-soft);border-radius:var(--radius-md);border:var(--border-subtle);overflow:hidden;}
+.inbox-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:var(--space-2) var(--space-3);background:var(--acn-deep-purple);color:white;font-size:var(--type-kicker);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;}
+.inbox-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:var(--space-2) var(--space-3);border-bottom:1px solid rgba(0,0,0,0.06);font-size:var(--type-label);align-items:center;}
+.inbox-row:last-child{border-bottom:none;}
+.inbox-row.urgent{background:rgba(196,72,72,0.05);}
+.ooo-card{background:var(--fill-soft);border-radius:var(--radius-md);border:var(--border-subtle);padding:var(--space-3);display:flex;flex-direction:column;gap:var(--space-3);}
+.ooo-step{display:flex;align-items:center;gap:var(--space-3);font-size:var(--type-body-sm);}
+.ooo-dot{width:0.55rem;height:0.55rem;border-radius:50%;background:var(--acn-purple);flex-shrink:0;}
+
+/* DASHBOARD */
+.dash-panels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--space-3);}
+.dash-panel{padding:var(--space-3);background:var(--fill-soft);border-radius:var(--radius-md);border:var(--border-subtle);display:flex;flex-direction:column;gap:var(--space-2);}
+.dash-panel-lbl{font-size:var(--type-kicker);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--acn-deep-purple);}
+.dash-vendor{display:flex;justify-content:space-between;align-items:center;padding:var(--space-2) var(--space-3);background:white;border-radius:var(--radius-sm);border:var(--border-subtle);font-size:var(--type-body-sm);}
+.dash-expiry{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2);}
+.dash-bucket{text-align:center;padding:var(--space-2);background:white;border-radius:var(--radius-sm);border:var(--border-subtle);}
+.dash-bucket-lbl{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);}
+.dash-bucket-count{font-size:var(--type-title-md);font-weight:800;color:var(--acn-deep-purple);}
+.dash-bucket.urgent .dash-bucket-count{color:#c44848;}
+</style>
+</head>
+<body>
+<main>
+
+<!-- SLIDE 1: COVER -->
+<div class="slide cover-slide">
+  <div class="cover-content">
+    <div class="reveal" style="width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.28);display:flex;align-items:center;justify-content:center;">
+      <svg viewBox="0 0 24 24" stroke="white" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:52px;height:52px;" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+    </div>
+    <p class="cover-eyebrow reveal" style="animation-delay:0.04s">Product Narrative &middot; MVP &middot; April 2026</p>
+    <h1 class="cover-title reveal" style="animation-delay:0.08s">Contract Lifecycle<br><span>Management</span></h1>
+    <div class="cover-accent reveal" style="animation-delay:0.14s;margin:0 auto;"></div>
+  </div>
+</div>
+
+<!-- SLIDE 2: THE PROBLEM -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">The Problem</p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Without a central system, basic contract questions cannot be answered &mdash; creating audit risk and costly missed renewals.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas">
+      <div class="problem-grid reveal" style="animation-delay:0.2s">
+        <div class="problem-card">
+          <div class="problem-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+          <p class="problem-quote">"Where is the signed MSA with Vendor X?"</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <p class="problem-quote">"Who approved this contract, and when?"</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <p class="problem-quote">"Which agreements are expiring in the next 60 days?"</p>
+        </div>
+        <div class="problem-card">
+          <div class="problem-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+          <p class="problem-quote">"Has anyone changed this document since it was approved?"</p>
+        </div>
+      </div>
+      <div class="takeaway-banner reveal" style="animation-delay:0.3s">
+        <p class="takeaway-banner-label">CLM Promise</p>
+        <p class="takeaway-banner-text">Contracts live in email threads, shared drives, and personal inboxes. CLM makes these questions trivially answerable &mdash; governance visible, auditable, and enforceable.</p>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">2</span></footer>
+</div>
+
+<!-- SLIDE 3: LIFECYCLE & SCOPE -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Lifecycle &amp; Scope</p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">The MVP delivers four of five contract stages natively, with integrations to three enterprise systems from Day 1.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas">
+      <div class="reveal" style="animation-delay:0.2s">
+        <div class="lifecycle-stages">
+          <div class="lifecycle-stage">
+            <div class="lifecycle-stage-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+            <div class="lifecycle-stage-box">Intake &amp; Request</div>
+            <p class="lifecycle-stage-desc">Submit requests; metadata pre-filled from commercial estimating</p>
+          </div>
+          <div class="lifecycle-stage">
+            <div class="lifecycle-stage-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+            <div class="lifecycle-stage-box">Generation &amp; Negotiation</div>
+            <p class="lifecycle-stage-desc">Build from approved templates; redlining stays in Word</p>
+          </div>
+          <div class="lifecycle-stage">
+            <div class="lifecycle-stage-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="lifecycle-stage-box">Governance &amp; Approvals</div>
+            <p class="lifecycle-stage-desc">Multi-stage approval chains with SLA tracking and immutable audit trail</p>
+          </div>
+          <div class="lifecycle-stage">
+            <div class="lifecycle-stage-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+            <div class="lifecycle-stage-box">Execution &amp; Obligation</div>
+            <p class="lifecycle-stage-desc">Execute agreed contract; auto-trigger PO and track obligations</p>
+          </div>
+          <div class="lifecycle-stage">
+            <div class="lifecycle-stage-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg></div>
+            <div class="lifecycle-stage-box">Repository &amp; Reporting</div>
+            <p class="lifecycle-stage-desc">Search contracts, manage renewals, and export portfolio data</p>
+          </div>
+        </div>
+      </div>
+      <div class="comp-card reveal" style="animation-delay:0.25s; padding:var(--space-3);">
+        <p class="comp-kicker">Deferred from MVP</p>
+        <p class="comp-body">E-signature integration deferred. In-document redlining stays in Microsoft Word for this release. All other stages are fully functional at launch.</p>
+      </div>
+      <div class="reveal" style="animation-delay:0.3s">
+        <p class="comp-kicker" style="margin-bottom:var(--space-2);">Day 1 Integrations</p>
+        <div class="integration-row">
+          <div class="integration-item">
+            <div class="integration-icon-row">
+              <div class="integration-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div>
+              <div>
+                <div class="integration-dir">Commercial Estimating &#8594; CLM</div>
+                <div class="integration-label">Metadata Pre-fill</div>
+              </div>
+            </div>
+            <p class="comp-body">Pre-fills contract metadata at intake &mdash; eliminates re-entry of commercial data already captured in the estimating tool</p>
+          </div>
+          <div class="integration-item">
+            <div class="integration-icon-row">
+              <div class="integration-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="16 13 12 17 8 13"/><line x1="12" y1="17" x2="12" y2="7"/></svg></div>
+              <div>
+                <div class="integration-dir">CLM &#8594; PO System</div>
+                <div class="integration-label">Purchase Order Trigger</div>
+              </div>
+            </div>
+            <p class="comp-body">Triggers purchase order automatically on contract execution &mdash; closes the procurement loop without manual handoff</p>
+          </div>
+          <div class="integration-item">
+            <div class="integration-icon-row">
+              <div class="integration-icon"><svg class="acn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></div>
+              <div>
+                <div class="integration-dir">CLM &#8596; Palantir RAID</div>
+                <div class="integration-label">Risk Escalation &amp; Resolution</div>
+              </div>
+            </div>
+            <p class="comp-body">Sends governance exceptions to RAID automatically; resolution notifications flow back to CLM contract owners</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">3</span></footer>
+</div>
+
+<!-- SLIDE 4: DELIVERY ROADMAP -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Delivery Roadmap</p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Eight self-contained Epics build the platform incrementally &mdash; every Epic ships a testable capability and clear business outcome.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas">
+      <div style="flex:1;min-height:0;overflow:hidden;border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);" class="reveal" style="animation-delay:0.2s">
+        <table class="tbl">
+          <thead><tr><th style="width:3%">#</th><th style="width:19%">Epic</th><th style="width:5%">Pts</th><th style="width:26%">Clear Outcome</th><th style="width:14%">Key Persona</th><th>Job To Be Done</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><strong>Identity &amp; Access Control</strong></td><td>36</td><td>Secured platform; every user sees only what their role permits</td><td>Admin</td><td>Ensure only the right people access the right contracts without managing manual access lists</td></tr>
+            <tr><td>2</td><td><strong>Contract Repository</strong></td><td>44</td><td>Single searchable source of truth for all contracts</td><td>Procurement Manager</td><td>Find any contract in seconds without searching email chains or shared drives</td></tr>
+            <tr><td>3</td><td><strong>Contract Lifecycle &amp; Audit</strong></td><td>48</td><td>Tracked, locked lifecycle with tamper-proof audit trail</td><td>Legal / Legal Ops</td><td>Know the state of every contract and prove it to auditors without manual record-keeping</td></tr>
+            <tr><td>4</td><td><strong>Template Library &amp; Builder</strong></td><td>54</td><td>Procurement generates compliant contracts without Legal drafting from scratch</td><td>Procurement Manager</td><td>Create a legally-approved contract in minutes, not days</td></tr>
+            <tr><td>5</td><td><strong>Core Approval Workflows</strong></td><td>62</td><td>Formal, traceable approval chains replacing ad-hoc email</td><td>Legal / Legal Ops</td><td>Move contracts through approval without chasing people over email and losing the decision trail</td></tr>
+            <tr><td>6</td><td><strong>Approver Experience &amp; Delegation</strong></td><td>46</td><td>Approvers clear queues efficiently; OOO never blocks progress</td><td>Approver</td><td>Clear pending approvals from one place and hand off my queue when out of office</td></tr>
+            <tr><td>7</td><td><strong>Portfolio Dashboard</strong></td><td>32</td><td>Live portfolio view for proactive renewal and risk management</td><td>Legal Leader / Exec</td><td>See full contract exposure and catch renewals before they auto-renew or lapse</td></tr>
+            <tr><td>8</td><td><strong>RAID Integration</strong></td><td>34</td><td>Contract governance exceptions surface in enterprise risk register automatically</td><td>Legal Leader</td><td>Surface contract risks to leadership without manual risk register updates</td></tr>
+            <tr style="background:rgba(70,0,115,0.05);"><td></td><td><strong>Total</strong></td><td><strong>356</strong></td><td colspan="3" style="color:var(--text-muted);font-size:var(--type-label);">1 pt = 1 hr dev effort &nbsp;&middot;&nbsp; E1 must complete first; all subsequent Epics depend on it</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="reveal" style="animation-delay:0.3s">
+        <p class="comp-kicker" style="margin-bottom:var(--space-2);">Non-Functional Requirements</p>
+        <div style="border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);overflow:hidden;">
+          <table class="tbl">
+            <thead><tr><th style="width:14%">Dimension</th><th>Requirement</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Performance</strong></td><td>Contract Detail page loads in &lt; 3s for documents up to 25MB; state transitions and notifications execute within 60s</td></tr>
+              <tr><td><strong>Security</strong></td><td>Access gated via SSO with session timeouts for inactivity; role boundaries enforced at the server API level, not just the UI</td></tr>
+              <tr><td><strong>Data Integrity</strong></td><td>Audit log is permanently uneditable across all roles, including Admin</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">4</span></footer>
+</div>
+
+<!-- SLIDE 5: DEMO MAP -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Outcomes &amp; Demo Map</p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">After each Epic the client can see and test a distinct capability &mdash; no Epic leaves a partial or invisible product.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas">
+      <div style="flex:1;min-height:0;overflow:hidden;border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);" class="reveal" style="animation-delay:0.2s">
+        <table class="tbl">
+          <thead><tr><th style="width:22%">Epic</th><th>Demonstrable Outcome After Completion</th></tr></thead>
+          <tbody>
+            <tr><td><strong>E1 &mdash; Identity &amp; Access</strong></td><td>Log in as each of the four roles; show forbidden actions hidden in UI and blocked at API level; provision and deactivate a test user</td></tr>
+            <tr><td><strong>E2 &mdash; Contract Repository</strong></td><td>Upload a contract, attach metadata, search and locate it by keyword/filter, view the unified Contract Detail page with all tabs</td></tr>
+            <tr><td><strong>E3 &mdash; Lifecycle &amp; Audit</strong></td><td>Walk a contract from Draft &#8594; In Review &#8594; Approved &#8594; Executed; trigger automatic expiry; show the immutable audit log with every action in plain language</td></tr>
+            <tr><td><strong>E4 &mdash; Template Builder</strong></td><td>Browse the template library, fill the variable form for an NDA, generate a compliant PDF/DOCX in under 2 minutes and watch it land as a Draft record</td></tr>
+            <tr><td><strong>E5 &mdash; Approval Workflows</strong></td><td>Submit a contract for approval, approve Stage 1, reject Stage 2 with a comment, show the chain halting and owner notified; resubmit from Draft</td></tr>
+            <tr><td><strong>E6 &mdash; Approver Experience</strong></td><td>Show the priority inbox sorted by SLA urgency; configure an OOO delegation with a date range; demonstrate a request redirecting to the delegate with correct audit labelling</td></tr>
+            <tr><td><strong>E7 &mdash; Portfolio Dashboard</strong></td><td>Show live vendor exposure cards, click a status on the chart to filter the library, review the 0&ndash;30 day expiry bucket, export a filtered PDF report</td></tr>
+            <tr><td><strong>E8 &mdash; RAID Integration</strong></td><td>Trigger an SLA breach, show the Palantir RAID Issue auto-created with contract metadata; mark it resolved in Palantir and show the CLM in-app notification firing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">5</span></footer>
+</div>
+
+<!-- SLIDE 6: QUESTIONS & ASSUMPTIONS -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Questions &amp; Assumptions</p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Three open questions require confirmation &mdash; seventeen decisions have been assumed and are reflected in the updated specification.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div style="margin-bottom:var(--space-3);">
+        <p class="comp-kicker" style="margin-bottom:var(--space-2);color:#C00000;">Open Questions &mdash; Require Client or Product Confirmation</p>
+        <div style="border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);overflow:hidden;">
+          <table class="tbl" style="font-size:0.72rem;">
+            <thead><tr><th style="width:5%">ID</th><th style="width:20%">Topic</th><th>Question</th><th style="width:8%">Owner</th></tr></thead>
+            <tbody>
+              <tr><td>P0-5</td><td><strong>Approved &#8594; Executed</strong></td><td>Which role triggers this state transition? Is it a manual button action or automatic on external confirmation?</td><td>S-AI</td></tr>
+              <tr><td>P2-5</td><td><strong>Template Upload Metadata</strong></td><td>What are the required metadata fields for template upload?</td><td>Product</td></tr>
+              <tr><td>P2-7</td><td><strong>OOO Delegation Deadlock</strong></td><td>If delegate User B also goes OOO and cannot sub-delegate, who resolves stalled approvals &mdash; Admin escalation or automatic alert?</td><td>Client</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div>
+        <p class="comp-kicker" style="margin-bottom:var(--space-2);color:var(--acn-purple,#460073);">Working Assumptions &mdash; Applied to Spec; Raise If Incorrect</p>
+        <div style="border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);overflow:hidden;">
+          <table class="tbl" style="font-size:0.65rem;">
+            <thead><tr><th style="width:22%">Topic</th><th>Assumption Applied</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Contract Owner</strong></td><td>Uploader = default owner; reassignable post-upload. Admin defines who is eligible to be a contract owner.</td></tr>
+              <tr><td><strong>Contract Type</strong></td><td>Admin-configurable. Default list: NDA, MSA, SOW, Employee Contract, Other Contract.</td></tr>
+              <tr><td><strong>Template Nested Variables</strong></td><td>Malformed or nested <code style="background:rgba(0,0,0,0.06);padding:1px 3px;border-radius:3px;">{{ }}</code> syntax blocks template upload with a clear error (not silently ignored).</td></tr>
+              <tr><td><strong>RAID &#8594; CLM Notifications</strong></td><td>Palantir pushes a webhook to a CLM-hosted endpoint on RAID item resolution. CLM processes and notifies within 60 seconds.</td></tr>
+              <tr><td><strong>SLA Duration Unit</strong></td><td>All SLA durations are specified and measured in business hours (not calendar hours).</td></tr>
+              <tr><td><strong>Session Timeout</strong></td><td>Default 15 minutes of inactivity. Admin-configurable.</td></tr>
+              <tr><td><strong>Account Lockout</strong></td><td>After 5 failed logins, Admin must manually unlock. Failed-attempt counter resets upon Admin unlock.</td></tr>
+              <tr><td><strong>Password Reset Link</strong></td><td>Expires after 2 hours.</td></tr>
+              <tr><td><strong>Upload Size Limit</strong></td><td>25 MB maximum. Admin-configurable.</td></tr>
+              <tr><td><strong>CRON Timezone</strong></td><td>All date-based CRON jobs (auto-expiry, RAID Risk triggers) run in UTC.</td></tr>
+              <tr><td><strong>Parallel Stage Rejection</strong></td><td>First rejection immediately halts the chain. Contract returns to initiator, who must add a mandatory comment on re-submission.</td></tr>
+              <tr><td><strong>RAID Issue Deduplication</strong></td><td>One RAID Issue per breach incident. If a breach resolves and recurs, a new Issue is created.</td></tr>
+              <tr><td><strong>RAID Trigger Threshold</strong></td><td>Equals the configured workflow SLA &mdash; not a hardcoded 48-hour value.</td></tr>
+              <tr><td><strong>Template Categories</strong></td><td>Admin-defined fixed list. Templates without a category display under &ldquo;Uncategorized.&rdquo;</td></tr>
+              <tr><td><strong>Active Workflow Template</strong></td><td>Active = at least one in-flight contract currently using it. Inactive templates can be edited directly.</td></tr>
+              <tr><td><strong>Audit Log CSV Headers</strong></td><td>Contract ID, Name, Type, Counterparty, Action, Changed Field, Old Value, New Value, User, Timestamp (UTC).</td></tr>
+              <tr><td><strong>Approver Inbox Secondary Sort</strong></td><td>When SLA due dates are equal: Contract Name A&ndash;Z, then oldest submission date first.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">6</span></footer>
+</div>
+
+<!-- SLIDE 7: EPIC 1 — IDENTITY & ACCESS -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 1 &middot; Identity &amp; Access <span class="epic-pts-total">36 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">SSO login, four enforced RBAC roles, and contract-level grants eliminate both over-sharing and access gaps from day one.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div style="overflow:hidden;border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);">
+          <table class="tbl">
+            <thead><tr><th>Action</th><th style="text-align:center">Viewer</th><th style="text-align:center">Procurement</th><th style="text-align:center">Legal</th><th style="text-align:center">Admin</th></tr></thead>
+            <tbody>
+              <tr><td>Log in</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>View granted contracts</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Upload / edit metadata</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Generate contract from template</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Initiate approval workflow</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Manage / govern templates</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Grant contract-level access</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td style="text-align:center;color:#1d7a4a;font-weight:700;">&#10003; (own)</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Manage users &amp; workflows</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td></tr>
+              <tr><td>Admin override / unlock</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-n">&mdash;</td><td class="rbac-y">&#10003;</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s1-1">1.1 Secure Login <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s1-2">1.2 RBAC Enforcement <span class="story-pts">10 pts</span></button>
+            <button class="story-tab-btn" data-tab="s1-3">1.3 Contract-Level Overrides <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s1-4">1.4 Provisioning &amp; Off-boarding <span class="story-pts">6 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s1-1">
+              <h4 class="story-title">Secure User Login</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Platform User, I want to log in securely via SSO or email and password so that I can reach my contracts without creating access risk.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Login via SSO or email/password; session expires after configurable inactivity period</li><li>Five consecutive failed login attempts locks the account; email notification sent to user</li><li>Password reset via time-limited email link</li><li>Every login and logout recorded in audit log with timestamp and IP address</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>SSO outage:</strong> System falls back to email/password if SSO provider times out</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s1-2">
+              <h4 class="story-title">Role-Based Permission Enforcement</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Admin, I want the system to enforce strict role-based access limits so that no one accidentally edits, approves, or shares beyond their authority.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Viewer: read-only access to explicitly granted contracts only</li><li>Procurement: upload contracts, edit metadata</li><li>Legal: Procurement permissions + initiate workflows + manage templates</li><li>Admin: full access including user/workflow management</li><li>Forbidden actions are hidden in UI AND blocked at the server API level</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Role downgrade mid-session:</strong> Session automatically refreshes to enforce new permissions immediately</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s1-3">
+              <h4 class="story-title">Contract-Level Permission Overrides</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Legal User or Owner, I want to grant temporary View or Edit access to a specific colleague on a single contract so that I can collaborate precisely and revoke access when done.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Owners with Legal role or above can add specific users as View or Edit collaborators on a single contract</li><li>Grants and revocations take effect immediately with no page reload delay</li><li>All grant and revocation actions logged in audit trail (who granted, to whom, when)</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Deactivated collaborator:</strong> If a collaborator's account is deactivated, their contract-specific grants are gracefully ignored</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s1-4">
+              <h4 class="story-title">User Account Provisioning &amp; Off-boarding</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Admin, I want to provision or deactivate user accounts so that system access stays synchronised with employment status.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Admin creates accounts with name, email, and role; 48-hour invite link sent automatically</li><li>Deactivated users cannot log in; their names persist on all historical records</li><li>All account lifecycle events (create, role change, deactivate) logged</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Expired invite:</strong> System displays clear message directing user to request a new link from Admin</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">7</span></footer>
+</div>
+
+<!-- SLIDE 8: EPIC 2 — CONTRACT REPOSITORY -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 2 &middot; Contract Repository <span class="epic-pts-total">44 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">A structured, searchable repository with parent-child linking and a unified detail view gives the organisation one definitive source of truth.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div style="background:var(--fill-soft);border:var(--border-subtle);border-radius:var(--radius-md);padding:var(--space-3);display:grid;grid-template-columns:2fr 1fr;gap:var(--space-3);">
+          <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <div style="display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap;">
+              <span style="font-size:var(--type-body-sm);font-weight:700;">Acme Corp &mdash; Master Services Agreement</span>
+              <span class="meta-badge" style="background:rgba(49,142,93,0.15);color:#1d7a4a;border:1px solid rgba(49,142,93,0.3);">Executed</span>
+              <span class="meta-badge" style="background:var(--fill-soft);color:var(--acn-deep-purple);border:var(--border-subtle);">Vendor/Counterparty: Acme Corp</span>
+              <span class="meta-badge" style="background:var(--fill-soft);color:var(--acn-deep-purple);border:var(--border-subtle);">$250,000</span>
+            </div>
+            <div style="background:rgba(161,0,255,0.04);border:var(--border-subtle);border-radius:var(--radius-sm);height:3rem;display:flex;align-items:center;justify-content:center;font-size:var(--type-label);color:var(--text-muted);">PDF Preview &middot; In-browser renderer</div>
+            <div style="display:flex;gap:var(--space-2);flex-wrap:wrap;">
+              <span style="font-size:var(--type-kicker);font-weight:700;padding:0.25em 0.7em;border-radius:var(--radius-sm);background:var(--acn-deep-purple);color:white;">State History</span>
+              <span style="font-size:var(--type-kicker);font-weight:700;padding:0.25em 0.7em;border-radius:var(--radius-sm);background:var(--fill-soft);border:var(--border-subtle);">Audit Log</span>
+              <span style="font-size:var(--type-kicker);font-weight:700;padding:0.25em 0.7em;border-radius:var(--radius-sm);background:var(--fill-soft);border:var(--border-subtle);">Collaborators</span>
+              <span style="font-size:var(--type-kicker);font-weight:700;padding:0.25em 0.7em;border-radius:var(--radius-sm);background:var(--fill-soft);border:var(--border-subtle);">Related Agreements</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--space-2);">
+            <p style="margin:0;font-size:var(--type-kicker);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--acn-deep-purple);">State Transitions (role-gated)</p>
+            <div style="padding:var(--space-2);border-radius:var(--radius-sm);background:rgba(49,142,93,0.1);border:1px solid rgba(49,142,93,0.3);color:#1d7a4a;font-weight:700;font-size:var(--type-label);">&#8594; Move to Approved</div>
+            <div style="padding:var(--space-2);border-radius:var(--radius-sm);background:var(--state-risk-fill);border:var(--state-risk-border);color:#8B0000;font-weight:700;font-size:var(--type-label);">&#8594; Terminate / Cancel</div>
+          </div>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s2-1">2.1 Upload <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s2-2">2.2 Metadata <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s2-3">2.3 Search &amp; Sort <span class="story-pts">10 pts</span></button>
+            <button class="story-tab-btn" data-tab="s2-4">2.4 Parent-Child Links <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s2-5">2.5 Detail View <span class="story-pts">12 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s2-1">
+              <h4 class="story-title">Upload Contract Document</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Procurement User or above, I want to upload a final agreement to the platform so that it is accessible to colleagues and securely stored.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Drag-and-drop or file browser accepts PDF and DOCX formats</li><li>File type and size validated before upload begins; clear error message on failure</li><li>Progress bar displayed during upload</li><li>Successfully uploaded files are attached to contract record and logged in audit trail</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>0-byte or malware file:</strong> System rejects with a distinct error separate from standard type/size validation</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s2-2">
+              <h4 class="story-title">Contract Metadata Capture</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Procurement User or above, I want to attach structured metadata to a contract so that agreements are consistently tagged and searchable.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Required fields: Name, Type, Status (defaults to Draft), Vendor/Counterparty, Start Date, Total Value</li><li>Optional fields: End Date, Currency</li><li>Every metadata edit logs the field name, old value, new value, user, and timestamp</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Chronology error:</strong> Form validation blocks submission if End Date is before Start Date</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s2-3">
+              <h4 class="story-title">Contract Library Search &amp; Sorting</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Platform User, I want to search and filter my accessible contracts so that I can find specific documents within seconds.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Full-text real-time search across Name, Vendor/Counterparty fields</li><li>Combinable filters (Type, Status, Vendor, Date Range) displayed as removable tags</li><li>All columns sortable; sort state persists within session</li><li>Results scoped to role-permitted or explicitly granted contracts only</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Special characters:</strong> Search input sanitises complex regex strings to prevent query errors or slow database loads</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s2-4">
+              <h4 class="story-title">Parent-Child Contract Linking</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Procurement User or above, I want to link amendments or renewals to a parent contract so that the full family of agreements is visible in one place.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Any contract can be designated a child with a relationship type: Amendment, Renewal, or Addendum</li><li>Parent contract shows a "Related Agreements" list; child shows a back-link to its parent</li><li>All linking and unlinking actions are audited</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Circular links:</strong> System prevents a contract being linked as its own parent or forming an infinite loop (A &#8594; B &#8594; A)</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s2-5">
+              <h4 class="story-title">Contract Detail View</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Platform User, I want a single unified page showing the document, metadata, and lifecycle status so that I can act without navigating multiple screens.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Displays metadata, in-browser PDF preview (or DOCX download), and status badge</li><li>Shows valid state transition buttons based on RBAC &mdash; invalid transitions never appear</li><li>Displays state history, full audit log, collaborator list, and related agreements in tabs</li><li>Page loads in under 3 seconds for documents up to 25MB</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Corrupted preview:</strong> If PDF viewer fails to render, a fallback "Download Document" button remains functional at all times</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">8</span></footer>
+</div>
+
+<!-- SLIDE 9: EPIC 3 — LIFECYCLE & AUDIT -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 3 &middot; Lifecycle &amp; Audit <span class="epic-pts-total">48 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Six enforced states, automatic expiry on end date, and a permanently immutable audit log make every contract action tamper-proof.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div>
+          <div class="state-machine">
+            <div class="state-box state-active">Draft</div>
+            <div class="state-arrow">&#8594;</div>
+            <div class="state-box state-active">In Review</div>
+            <div class="state-arrow">&#8594;</div>
+            <div class="state-box state-locked">Approved &#128274;</div>
+            <div class="state-arrow">&#8594;</div>
+            <div class="state-box state-locked">Executed &#128274;</div>
+            <div class="state-arrow">&#8594; &#128336;</div>
+            <div>
+              <div class="state-box state-locked">Expired &#128274;</div>
+              <div style="font-size:0.6rem;color:var(--acn-gray);text-align:center;margin-top:2px;">Daily CRON</div>
+            </div>
+            <div style="margin-left:auto;display:flex;align-items:center;gap:var(--space-2);border-left:2px dashed rgba(196,72,72,0.3);padding-left:var(--space-3);">
+              <div>
+                <div class="state-box state-terminal" style="border-style:dashed;">Terminated / Cancelled &#128274;</div>
+                <div style="font-size:0.6rem;color:var(--text-muted);margin-top:2px;">From any active state &middot; Mandatory reason required</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s3-1">3.1 Six-State Lifecycle <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s3-2">3.2 Terminated State <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s3-3">3.3 Auto Expiry <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s3-4">3.4 Lock Approved <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s3-5">3.5 Notifications <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s3-6">3.6 Audit Log <span class="story-pts">10 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s3-1">
+              <h4 class="story-title">The Six-State Lifecycle</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to enforce strict lifecycle phases (Draft &#8594; In Review &#8594; Approved &#8594; Executed &#8594; Expired) so that no contract bypasses required stages.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Linear path strictly enforced; invalid transitions blocked and hidden from UI</li><li>Terminated/Cancelled reachable from any active state (Draft, In Review, Approved, Executed)</li><li>All state changes logged with: from-state, to-state, user, timestamp</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Concurrent transition:</strong> If two authorised users transition simultaneously, first is processed; second receives "State already updated" message</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s3-2">
+              <h4 class="story-title">Terminated / Cancelled State</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Legal Ops User or Admin, I want to transition a contract to Terminated/Cancelled with a recorded reason so that I can remove it from active workflows without losing its history.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Reachable from Draft, In Review, Approved, or Executed states only</li><li>Mandatory reason note required (minimum 20 characters)</li><li>Record locks immediately on transition; no further edits possible</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Already expired:</strong> System prevents Terminated/Cancelled transitions on contracts already in the Expired terminal state</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s3-3">
+              <h4 class="story-title">Automatic Expiry on End Date</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to transition contracts to Expired automatically when their end date passes so that the portfolio is always accurate without manual tracking.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Daily CRON job checks all contracts in Executed state</li><li>Contracts with End Date &le; today are transitioned to Expired automatically</li><li>Contract owner notified via in-app notification on automatic expiry</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Job failure:</strong> If daily job fails, it retries automatically every hour until successful; failure is logged in Admin audit trail</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s3-4">
+              <h4 class="story-title">Lock Approved and Closed Contracts</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Auditor/System, I want Approved, Executed, Terminated, and Expired contracts permanently locked against edits so that agreed terms are preserved intact.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>All metadata fields and document edit controls locked on reaching these states</li><li>Admin can unlock a contract to Draft state but must enter a mandatory justification</li><li>Unlock justification is permanently and immutably logged</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Admin unlock alerts:</strong> Unlocking triggers automatic email to Legal Ops and the contract owner to prevent silent administrative overrides</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s3-5">
+              <h4 class="story-title">Stakeholder Notifications on State Change</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Contract Owner, I want automatic notifications when my contract changes state so that I can keep workflows moving efficiently.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>In-app and email notification sent within 60 seconds of any state change</li><li>Notification includes: previous state, new state, actor who made the change, and a direct link to the contract</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Email bounce:</strong> If email provider fails, in-app notification is still reliably delivered; email failure logged but does not block the state transition</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s3-6">
+              <h4 class="story-title">Immutable Contract Audit Log</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Compliance Officer, I want an uneditable, permanent log of every contract action so that I can demonstrate compliance during audits.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Logs: create, upload, edit (field-level), state transition, approval decision, collaborator grant/revoke, view</li><li>Each entry in plain language format: who, what, when</li><li>Read-only for all roles including Admin; filterable by date range and action type; exportable to CSV</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Massive export:</strong> If a global log export exceeds standard row limits, the system paginates CSV or delivers it asynchronously via email link</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">9</span></footer>
+</div>
+
+<!-- SLIDE 10: EPIC 4 — TEMPLATE BUILDER -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 4 &middot; Template Builder <span class="epic-pts-total">54 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Legal-approved, version-controlled templates with dynamic variable substitution let procurement generate compliant contracts in minutes via a web form.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div>
+          <div class="flow-steps">
+            <div class="flow-step"><div class="flow-num">1</div><div class="flow-label">Template Library</div><div class="flow-desc">DOCX upload, version label, previous version auto-archived</div></div>
+            <div class="flow-step"><div class="flow-num">2</div><div class="flow-label">Variable Extraction</div><div class="flow-desc">{{placeholder}} tokens detected; list shown for Legal review</div></div>
+            <div class="flow-step"><div class="flow-num">3</div><div class="flow-label">Dynamic Form</div><div class="flow-desc">One input per variable; live preview shows where data lands</div></div>
+            <div class="flow-step"><div class="flow-num">4</div><div class="flow-label">Document Generation</div><div class="flow-desc">Variable substitution &#8594; PDF/DOCX output</div></div>
+            <div class="flow-step"><div class="flow-num">5</div><div class="flow-label">Draft Contract Record</div><div class="flow-desc">Auto-created and linked to template version used</div></div>
+          </div>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s4-1">4.1 Version-Controlled Library <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s4-2">4.2 Browse &amp; Preview <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s4-3">4.3 Define Variables <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s4-4">4.4 Generate Contract <span class="story-pts">12 pts</span></button>
+            <button class="story-tab-btn" data-tab="s4-5">4.5 Validation &amp; Errors <span class="story-pts">8 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s4-1">
+              <h4 class="story-title">Version-Controlled Template Library</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As Legal Ops, I want to manage version-controlled contract templates so that the business always uses current approved legal language.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Upload DOCX template with name, category, and version label</li><li>Uploading a new version automatically archives the previous version</li><li>Only active (non-archived) templates are available for contract generation</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>In-flight generation:</strong> If Legal Ops archives a template while a user is filling its form, the user can finish; a warning is logged on the resulting contract record</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s4-2">
+              <h4 class="story-title">Browse &amp; Preview Templates</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Business User, I want to browse and preview active templates so that I choose the correct legal form for my transaction.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Templates grouped by category; real-time search by name and category</li><li>Clicking a template previews the document alongside its metadata (name, category, version, last updated)</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Preview failure:</strong> If rendering engine fails, displays a generic placeholder and a "Download to Preview" button</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s4-3">
+              <h4 class="story-title">Define Template Variables</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As Legal Ops, I want to embed variables (e.g. {{vendor_name}}) in templates so that the system can automatically build data-entry forms.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>System extracts all {{variable}} placeholders on template upload</li><li>Extracted variable list is displayed to the author for verification before saving</li><li>Malformed placeholders (e.g. unclosed brackets) are flagged as warnings</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Nested variables:</strong> System strictly errors on complex/nested bracket syntax with a clear message</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s4-4">
+              <h4 class="story-title">Generate a Contract from a Template</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Procurement User, I want to fill in a web form to generate a contract so that I produce accurate, compliant documents in minutes without Legal drafting from scratch.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Form is dynamically generated based on the template's extracted variables</li><li>Live preview updates as user fills fields, showing exactly where data lands in the document</li><li>On submit: substitutes all variables, compiles PDF and DOCX, creates a Draft contract record linked to the template version used</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Generation timeout:</strong> If document compilation takes &gt;30 seconds, UI shows a friendly loading state; the process does not crash or lose user input</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s4-5">
+              <h4 class="story-title">Builder Validation &amp; Error Handling</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Business User, I want instant validation on my form inputs so that I can fix errors before generation fails.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Real-time inline validation on dates (valid format, chronology), currencies (numeric), and required fields</li><li>Failed generation attempt preserves all form entries so work is not lost</li><li>Clear error message identifies which field caused the failure</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Extreme inputs:</strong> Numeric currency fields enforce maximum limits to prevent integer overflow errors in the database</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">10</span></footer>
+</div>
+
+<!-- SLIDE 11: EPIC 5 — APPROVAL WORKFLOWS -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 5 &middot; Approval Workflows <span class="epic-pts-total">62 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Configurable sequential and parallel approval chains with SLA tracking replace ad-hoc email approvals with enforceable, auditable governance records.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div>
+          <div class="workflow-wrap">
+            <div class="wf-card">
+              <p class="wf-lbl">Sequential Chain</p>
+              <div class="wf-chain">
+                <div class="wf-stage">Stage 1<span class="wf-sla">SLA: 48h</span></div>
+                <div class="wf-arr">&#8594;</div>
+                <div class="wf-stage">Stage 2<span class="wf-sla">SLA: 24h</span></div>
+                <div class="wf-arr">&#8594;</div>
+                <div class="wf-stage" style="background:rgba(49,142,93,0.1);border-color:#1d7a4a;color:#1d7a4a;">Stage 3 &#10003;<span class="wf-sla">Final</span></div>
+                <div class="wf-arr">&#8594;</div>
+                <div class="wf-stage" style="background:rgba(70,0,115,0.08);border-color:var(--acn-deep-purple);">Approved</div>
+              </div>
+            </div>
+            <div class="wf-card">
+              <p class="wf-lbl">Parallel Stage</p>
+              <div class="wf-chain">
+                <div class="wf-stage">Stage 1</div>
+                <div class="wf-arr">&#8594;</div>
+                <div class="wf-parallel">
+                  <div class="wf-stage" style="font-size:var(--type-label);">Approver A</div>
+                  <div class="wf-stage" style="font-size:var(--type-label);">Approver B</div>
+                  <div class="wf-stage" style="font-size:var(--type-label);">Approver C</div>
+                </div>
+                <div class="wf-arr">&#8594;</div>
+                <div class="wf-stage">Stage 3</div>
+              </div>
+              <p style="margin:var(--space-2) 0 0 0;font-size:var(--type-label);color:var(--text-muted);">All must approve to advance &middot; Single rejection halts chain</p>
+            </div>
+          </div>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s5-1">5.1 Configure Workflows <span class="story-pts">10 pts</span></button>
+            <button class="story-tab-btn" data-tab="s5-2">5.2 SLA Config <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s5-3">5.3 Submit for Approval <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s5-4">5.4 Approve or Reject <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s5-5">5.5 Chain Advancement <span class="story-pts">12 pts</span></button>
+            <button class="story-tab-btn" data-tab="s5-6">5.6 Rejection &amp; Resubmission <span class="story-pts">10 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s5-1">
+              <h4 class="story-title">Configure Sequential &amp; Parallel Workflows</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Admin, I want to build approval routing templates so that specific contract types route correctly and automatically without manual intervention.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Build named workflow templates with ordered stages; each stage can be sequential or parallel</li><li>Workflow templates are associated with specific contract types</li><li>Active workflow templates cannot be edited; a new version must be created instead</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Empty stage:</strong> UI prevents saving a workflow template if a stage exists but no approvers are assigned to it</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s5-2">
+              <h4 class="story-title">Approval Stage SLA Configuration</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Admin, I want to set SLAs on approval stages so that the system tracks bottlenecks automatically rather than relying on manual follow-up.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Configurable SLA duration (e.g. 48 hours) set per stage within a workflow template</li><li>Visual amber warning applied to any stage that has exceeded its SLA</li><li>SLA breach triggers notification to the contract owner</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Zero-day SLA:</strong> Form validation requires SLA to be greater than 0</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s5-3">
+              <h4 class="story-title">Submit a Contract for Approval</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Legal User, I want to trigger the approval chain from the contract page so that stakeholders are formally engaged with a single action.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>"Submit for Approval" button visible to Legal and Admin roles on contracts in Draft state</li><li>System verifies a workflow template exists for the contract's type before allowing submission</li><li>On submit: contract transitions to In Review; first-stage approvers notified immediately</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>No workflow configured:</strong> Submission blocked with message: "No approval workflow configured for this Contract Type. Contact Admin."</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s5-4">
+              <h4 class="story-title">Approve or Reject with Mandatory Comment</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Approver, I want to record my decision in the platform so that my sign-off or objection is officially and permanently captured.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Approve action records decision immediately with timestamp</li><li>Reject action requires a mandatory text comment before it can be submitted</li><li>Both decisions written immediately to the audit log</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Role change mid-flight:</strong> If an approver loses their role while a contract is pending, the stage is flagged "Unassigned" for Admin reassignment</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s5-5">
+              <h4 class="story-title">Automatic Chain Advancement</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to automatically advance contracts to the next stage upon approval so that the workflow never stalls waiting for manual progression.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Sequential: completion of one stage immediately triggers the next</li><li>Parallel: all approvers in the stage must approve before the chain advances; a single rejection halts the entire chain</li><li>Final stage approval automatically transitions the contract to Approved state</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Simultaneous parallel rejection:</strong> If two parallel approvers reject at the exact same microsecond, both rejection comments are preserved in the audit log</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s5-6">
+              <h4 class="story-title">Rejection &amp; Resubmission Flow</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Contract Owner, I want to be notified of rejections and easily resubmit so that I can resolve issues without losing the historical approval chain.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Owner notified within 60 seconds of rejection with the full rejection comment and rejecting approver's name</li><li>Contract reverts to Draft state on rejection</li><li>All prior approval records (accepted and rejected stages) are retained in the audit log</li><li>Resubmitting restarts the approval chain from Stage 1</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Resubmission without document change:</strong> UI allows resubmission even if the document was not changed, as the underlying blocker may have been resolved off-system</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">11</span></footer>
+</div>
+
+<!-- SLIDE 12: EPIC 6 — APPROVER EXPERIENCE -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 6 &middot; Approver Experience <span class="epic-pts-total">46 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">A priority inbox, real-time chain visibility, and OOO delegation ensure approvals never stall due to absence or missing information.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div>
+          <div class="inbox-wrap">
+            <div class="inbox-mock">
+              <div class="inbox-head"><span>Contract</span><span>Submitter</span><span>SLA Due</span><span>Status</span></div>
+              <div class="inbox-row urgent"><span><strong>Acme Corp NDA</strong></span><span>J. Smith</span><span style="color:#c44848;font-weight:700;">Overdue</span><span><span class="meta-badge" style="background:rgba(196,72,72,0.1);color:#c44848;border:1px solid rgba(196,72,72,0.3);">&#9888; SLA Breach</span></span></div>
+              <div class="inbox-row"><span><strong>Vendor MSA v2</strong></span><span>L. Chen</span><span>4h remaining</span><span><span class="meta-badge" style="background:var(--fill-soft);color:var(--acn-deep-purple);border:var(--border-subtle);">Pending</span></span></div>
+              <div class="inbox-row"><span><strong>Partner Agreement</strong></span><span>R. Patel</span><span>18h remaining</span><span><span class="meta-badge" style="background:var(--fill-soft);color:var(--acn-deep-purple);border:var(--border-subtle);">Pending</span></span></div>
+              <div style="padding:var(--space-2) var(--space-3);font-size:var(--type-label);color:var(--text-muted);">Sorted by urgency &middot; Live count badge in nav</div>
+            </div>
+            <div class="ooo-card">
+              <p style="margin:0;font-size:var(--type-kicker);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--acn-deep-purple);">OOO Delegation Flow</p>
+              <div class="ooo-step"><div class="ooo-dot"></div><span>Approver A sets delegate + date range</span></div>
+              <div style="text-align:center;color:var(--acn-gray);font-size:0.75rem;">&#8595;</div>
+              <div class="ooo-step"><div class="ooo-dot"></div><span>All requests auto-redirect to Approver B</span></div>
+              <div style="text-align:center;color:var(--acn-gray);font-size:0.75rem;">&#8595;</div>
+              <div class="ooo-step"><div class="ooo-dot"></div><span>Audit reads: <em>"User B acting on behalf of User A"</em></span></div>
+              <div class="ooo-step" style="background:rgba(196,72,72,0.06);padding:var(--space-2);border-radius:var(--radius-sm);margin-top:var(--space-2);"><div class="ooo-dot" style="background:#c44848;"></div><span style="color:#8B0000;font-size:var(--type-label);">No sub-delegation &middot; Circular delegation blocked</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s6-1">6.1 Priority Inbox <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s6-2">6.2 Chain Visibility <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s6-3">6.3 Final Approval Lock <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s6-4">6.4 OOO Delegation <span class="story-pts">12 pts</span></button>
+            <button class="story-tab-btn" data-tab="s6-5">6.5 Admin Reassignment <span class="story-pts">6 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s6-1">
+              <h4 class="story-title">Approver Inbox &amp; Priority Queue</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Approver, I want a personal inbox of pending tasks sorted by urgency so that I can manage my workload without missing critical SLAs.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Live count badge in navigation reflects real-time pending approvals</li><li>Inbox shows contract name, submitter name, and SLA due date per item</li><li>Default sort: most urgent SLA first</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>High volume:</strong> Inbox implements lazy loading / pagination if a user has more than 50 pending approvals</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s6-2">
+              <h4 class="story-title">Approval Chain Visibility</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Stakeholder, I want to view the real-time status of the approval chain so that I know who is currently blocking progress without sending chase emails.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Visual timeline shown on the Contract Detail page</li><li>Active stage is highlighted; parallel stages are clearly grouped together</li><li>Completed stages show approver name and decision timestamp</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Extremely long chains:</strong> UI handles chains of 10+ stages via horizontal scroll or clean vertical wrapping without breaking the layout</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s6-3">
+              <h4 class="story-title">Final Approval Locks Contract &amp; Notifies Owner</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Contract Owner, I want immediate notification and automatic locking upon final approval so that I can confidently proceed to execution.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Contract automatically transitions to Approved state on final stage approval</li><li>All edit controls locked immediately; no further changes possible without Admin unlock</li><li>Owner receives a summary email listing the full approval chain (approver, stage, timestamp)</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Self-approval:</strong> If the final approver is also the contract owner, the system still formally logs the approval and sends the completion summary</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s6-4">
+              <h4 class="story-title">Out-of-Office Delegation</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Approver, I want to designate an OOO deputy so that my approval queue does not create a bottleneck while I am on leave.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Approver selects a delegate and specifies a start and end date for the delegation period</li><li>All approval requests during the period are automatically redirected to the delegate</li><li>Audit trail explicitly records delegated actions as "User B acting on behalf of User A"</li><li>No nested sub-delegation allowed (the delegate cannot themselves delegate further)</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Circular delegation:</strong> System prevents User A delegating to User B if User B has already delegated to User A</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s6-5">
+              <h4 class="story-title">Admin Reassignment of Stuck Approvals</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Admin, I want to reassign stuck approvals manually so that workflows can bypass sudden employee departures or role changes.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Admin can override the pending approver on any stage with a new user</li><li>Mandatory justification text required before reassignment is saved</li><li>Log records original approver, new approver, Admin who actioned, and justification</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Invalid target:</strong> System prevents reassigning to a user who has already approved a previous stage in the same chain</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">12</span></footer>
+</div>
+
+<!-- SLIDE 13: EPIC 7 — PORTFOLIO DASHBOARD -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 7 &middot; Portfolio Dashboard <span class="epic-pts-total">32 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Live vendor exposure, lifecycle status charts, and expiry buckets give leadership proactive visibility to act before risk materialises.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div>
+          <div class="dash-panels">
+            <div class="dash-panel">
+              <div class="dash-panel-lbl">Vendor Exposure</div>
+              <div class="dash-vendor"><span><strong>Acme Corp</strong></span><span class="meta-badge" style="background:rgba(49,142,93,0.12);color:#1d7a4a;border:1px solid rgba(49,142,93,0.28);">4 active &middot; $1.2M</span></div>
+              <div class="dash-vendor"><span><strong>GlobalTech</strong></span><span class="meta-badge" style="background:var(--fill-soft);color:var(--acn-deep-purple);border:var(--border-subtle);">2 active &middot; $380K</span></div>
+              <div class="dash-vendor"><span><strong>Nexus Partners</strong></span><span class="meta-badge" style="background:rgba(196,130,0,0.1);color:#a06c00;border:1px solid rgba(196,130,0,0.25);">1 expiring &middot; $95K</span></div>
+              <p style="margin:0;font-size:var(--type-label);color:var(--text-muted);">Click any card &#8594; filtered library view</p>
+            </div>
+            <div class="dash-panel">
+              <div class="dash-panel-lbl">Status Summary</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2);">
+                <div style="text-align:center;padding:var(--space-2);background:white;border-radius:var(--radius-sm);border:var(--border-subtle);"><div style="font-size:var(--type-title-md);font-weight:800;color:var(--acn-deep-purple);">12</div><div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Draft</div></div>
+                <div style="text-align:center;padding:var(--space-2);background:rgba(161,0,255,0.06);border-radius:var(--radius-sm);border:var(--state-highlight-border);"><div style="font-size:var(--type-title-md);font-weight:800;color:var(--acn-purple);">5</div><div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">In Review</div></div>
+                <div style="text-align:center;padding:var(--space-2);background:rgba(49,142,93,0.08);border-radius:var(--radius-sm);border:var(--state-positive-border);"><div style="font-size:var(--type-title-md);font-weight:800;color:#1d7a4a;">31</div><div style="font-size:0.6rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Executed</div></div>
+              </div>
+              <p style="margin:0;font-size:var(--type-label);color:var(--text-muted);">Real-time &middot; Click state &#8594; filtered view</p>
+            </div>
+            <div class="dash-panel">
+              <div class="dash-panel-lbl">Expiry Timeline</div>
+              <div class="dash-expiry">
+                <div class="dash-bucket urgent"><div class="dash-bucket-lbl">0&ndash;30 days</div><div class="dash-bucket-count">3</div></div>
+                <div class="dash-bucket"><div class="dash-bucket-lbl">31&ndash;60 days</div><div class="dash-bucket-count">7</div></div>
+                <div class="dash-bucket"><div class="dash-bucket-lbl">61&ndash;90 days</div><div class="dash-bucket-count">11</div></div>
+              </div>
+              <p style="margin:0;font-size:var(--type-label);color:#c44848;font-weight:600;">Past-due active contracts flagged red in 0&ndash;30 bucket</p>
+            </div>
+          </div>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s7-1">7.1 Vendor Exposure <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s7-2">7.2 Status Summary <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s7-3">7.3 Expiry Timeline <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s7-4">7.4 Filters &amp; Export <span class="story-pts">10 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s7-1">
+              <h4 class="story-title">Vendor Exposure Dashboard</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As an Executive, I want to see aggregated contract data grouped by vendor so that I can instantly assess supplier liability without pulling manual reports.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Summary card per vendor showing: active contract count, total value, breakdown of statuses</li><li>Clicking a vendor card navigates to the contract library filtered to that vendor</li><li>Dashboard honours RBAC &mdash; users only see vendors within their permitted contracts</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Massive vendor list:</strong> Dashboard paginates or lazy-loads if user has access to more than 100 vendors</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s7-2">
+              <h4 class="story-title">Contract Status Summary</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Legal Leader, I want a visual count of contracts in each lifecycle state so that I can monitor portfolio health at a glance.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Status summary displayed as both a chart and a data table below it</li><li>Clicking a state navigates to the contract library filtered to that state</li><li>Data updates in real-time (no manual refresh required)</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Zero-count states:</strong> States with zero contracts still display on the chart to maintain visual consistency</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s7-3">
+              <h4 class="story-title">Expiry Timeline</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As Legal Ops, I want an automated tracker for expiring contracts so that I can initiate renewals proactively before they lapse.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Contracts bucketed into: expiring 0&ndash;30 days, 31&ndash;60 days, 61&ndash;90 days</li><li>Filterable by vendor and contract type</li><li>Contracts with no end date are excluded from the timeline</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Past-due active contracts:</strong> Contracts past their end date but still in an active state (e.g. Executed) are flagged in red within the 0&ndash;30 day bucket</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s7-4">
+              <h4 class="story-title">Dashboard Filters &amp; Export</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Business User, I want to filter and export dashboard views so that I can share accurate reports with external stakeholders without manual data extraction.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Global filter bar updates all dashboard widgets simultaneously</li><li>Export to CSV or PDF; export file stamped with user name, export date, and active filters</li><li>Export action is audited in the system log</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Empty export:</strong> If active filters yield zero results, the export button is disabled to prevent generating blank documents</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">13</span></footer>
+</div>
+
+<!-- SLIDE 14: EPIC 8 — RAID INTEGRATION -->
+<div class="slide content-light-slide">
+  <div class="slide-content">
+    <p class="slide-subtitle reveal">Epic 8 &middot; RAID Integration <span class="epic-pts-total">34 pts</span></p>
+    <h2 class="hero-statement reveal" style="animation-delay:0.05s">Five automatic CLM-to-RAID triggers ensure every governance breach, major execution, and approaching expiry surfaces in the enterprise risk register.</h2>
+    <div class="accent-bar reveal" style="animation-delay:0.15s"></div>
+    <div class="slide-canvas reveal" style="animation-delay:0.2s">
+      <div class="epic-layout">
+        <div style="overflow:hidden;border-radius:var(--radius-md);border:1px solid rgba(0,0,0,0.1);">
+          <table class="tbl">
+            <thead><tr><th style="width:32%">CLM Event</th><th style="width:12%">RAID Type</th><th style="width:30%">Key Data Sent</th><th>Condition</th></tr></thead>
+            <tbody>
+              <tr><td>Approval SLA breach &gt; 48h</td><td><span class="meta-badge" style="background:var(--state-risk-fill);color:#8B0000;border:var(--state-risk-border);">Issue</span></td><td>Contract name, overdue party, SLA due date, link</td><td>One Issue per event; no duplicates</td></tr>
+              <tr><td>Contract executed (above value threshold)</td><td><span class="meta-badge" style="background:var(--state-positive-fill);color:#1d7a4a;border:var(--state-positive-border);">Decision</span></td><td>Vendor, value, execution date, link</td><td>Zero-value contracts bypassed unless Admin overrides</td></tr>
+              <tr><td>30 days to expiry, no renewal linked</td><td><span class="meta-badge" style="background:rgba(196,130,0,0.1);color:#a06c00;border:1px solid rgba(196,130,0,0.28);">Risk</span></td><td>Contract name, expiry date, link</td><td>Terminated/Cancelled contracts excluded</td></tr>
+              <tr><td>Admin unlocks Approved/Executed contract</td><td><span class="meta-badge" style="background:rgba(196,130,0,0.1);color:#a06c00;border:1px solid rgba(196,130,0,0.28);">Risk</span></td><td>Admin name, justification, date, link</td><td>Persists even if immediately relocked</td></tr>
+              <tr><td>RAID item resolved in Palantir</td><td><span class="meta-badge" style="background:var(--fill-soft);color:var(--acn-deep-purple);border:var(--border-subtle);">CLM Notify</span></td><td>Resolution note, link to contract</td><td>Reopened RAID items trigger a second CLM alert</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="story-tabs">
+          <div class="story-tab-strip">
+            <button class="story-tab-btn active" data-tab="s8-1">8.1 SLA Breach &#8594; Issue <span class="story-pts">8 pts</span></button>
+            <button class="story-tab-btn" data-tab="s8-2">8.2 Execution &#8594; Decision <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s8-3">8.3 Expiry &#8594; Risk <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s8-4">8.4 Unlock &#8594; Risk <span class="story-pts">6 pts</span></button>
+            <button class="story-tab-btn" data-tab="s8-5">8.5 RAID Resolution &#8594; Notify <span class="story-pts">8 pts</span></button>
+          </div>
+          <div class="story-tab-panels">
+            <div class="story-tab-panel active" data-panel="s8-1">
+              <h4 class="story-title">Approval SLA Breach Creates RAID Issue</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to post an Issue to Palantir RAID when an approval SLA is breached so that governance blockages escalate to leadership automatically.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>SLA breach exceeding 48 hours automatically creates a RAID Issue in Palantir</li><li>Issue includes: contract name, overdue approver, SLA due date, and direct link to the contract</li><li>Exactly one Issue created per breach event &mdash; no duplicate Issues on repeat checks</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>API timeout:</strong> If Palantir API fails, system retries every 15 minutes; each failure logged as "System Integration Failure" in Admin audit trail</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s8-2">
+              <h4 class="story-title">Contract Execution Creates RAID Decision</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to record major contract executions as a RAID Decision so that the wider team receives an official signal to proceed.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Contracts transitioning to Executed with total value above a configurable threshold create a RAID Decision in Palantir</li><li>Decision includes: vendor name, contract value, execution date, and link</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Missing value:</strong> Contracts with zero total value (e.g. zero-dollar NDAs) bypass this logic unless overridden by Admin configuration</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s8-3">
+              <h4 class="story-title">Approaching Expiry Without Renewal Creates RAID Risk</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to raise a RAID Risk for contracts 30 days from expiry without a renewal so that unmanaged portfolio exposure is highlighted.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Triggers when a contract reaches 30 days before its End Date and has no linked child "Renewal" record</li><li>Linking a Renewal record to the contract subsequently closes the RAID Risk automatically</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Terminated contracts:</strong> Contracts manually moved to Terminated/Cancelled bypass the expiry risk logic entirely</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s8-4">
+              <h4 class="story-title">Admin Contract Unlock Creates RAID Risk</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As the System, I want to create a RAID Risk when an Admin unlocks an approved contract so that post-approval modifications are visible to leadership.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>Unlocking an Approved or Executed contract back to Draft state creates a RAID Risk in Palantir</li><li>Risk includes: Admin name, justification text entered at unlock, date</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Immediate relock:</strong> Even if the Admin relocks the contract seconds later, the RAID Risk persists for audit review</p>
+            </div>
+            <div class="story-tab-panel" data-panel="s8-5">
+              <h4 class="story-title">RAID Resolution Notifies CLM Contract Owner</h4>
+              <p class="story-lbl">User Story</p><p class="story-us">As a Contract Owner, I want to be notified when my linked RAID item is resolved so that I can unblock my workflow without manually monitoring Palantir.</p>
+              <p class="story-lbl">Acceptance Criteria</p><ul class="story-list"><li>A RAID Issue or Risk being resolved in Palantir triggers both an in-app and email notification to the CLM contract owner within 60 seconds</li><li>Notification includes: resolution note text and a direct link to the relevant contract</li></ul>
+              <p class="story-lbl">Edge Case</p><p class="story-edge"><strong>Reopened RAID item:</strong> If a resolved item is subsequently reopened in Palantir, the CLM contract owner receives a corresponding "RAID Item Reopened" alert</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <footer class="slide-footer"><svg class="slide-footer-chevron" viewBox="0 0 16 16" aria-hidden="true"><polyline points="4,2 12,8 4,14" stroke="#A100FF" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="slide-footer-source"></span><span class="slide-footer-page">14</span></footer>
+</div>
+
+</main>
+
+<div id="deck-chrome" aria-label="Presentation controls">
+  <button id="deck-prev" aria-label="Previous slide">&#8592;</button>
+  <span id="deck-counter">1 / 13</span>
+  <button id="deck-next" aria-label="Next slide">&#8594;</button>
+  <button id="deck-fullscreen" aria-label="Toggle fullscreen" title="Fullscreen (F)">&#9974;</button>
+</div>
+
+<script>
+document.querySelectorAll('.story-tab-strip').forEach(function(strip){
+  strip.querySelectorAll('.story-tab-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var tabs=strip.closest('.story-tabs');
+      tabs.querySelectorAll('.story-tab-btn').forEach(function(b){b.classList.remove('active');});
+      tabs.querySelectorAll('.story-tab-panel').forEach(function(p){p.classList.remove('active');});
+      btn.classList.add('active');
+      tabs.querySelector('[data-panel="'+btn.dataset.tab+'"]').classList.add('active');
+    });
+  });
+});
+
+document.addEventListener('DOMContentLoaded',function(){
+  var revObs=new IntersectionObserver(function(entries,obs){
+    entries.forEach(function(e){if(!e.isIntersecting)return;e.target.classList.add('active');obs.unobserve(e.target);});
+  },{threshold:0.32});
+  document.querySelectorAll('.slide').forEach(function(s){revObs.observe(s);});
+
+  var allSlides=Array.from(document.querySelectorAll('.slide'));
+  var mainSlides=allSlides.filter(function(s){return!s.hasAttribute('data-appendix');});
+  var appendixSlides=allSlides.filter(function(s){return s.hasAttribute('data-appendix');});
+  var dPrev=document.getElementById('deck-prev');
+  var dNext=document.getElementById('deck-next');
+  var dCounter=document.getElementById('deck-counter');
+  var dFS=document.getElementById('deck-fullscreen');
+  var ci=0,editOn=false;
+  var EDITABLE='h1,h2,h3,h4,p,li,td,th,span,strong,em';
+
+  function cText(i){
+    var s=allSlides[i];if(!s)return'1 / '+Math.max(mainSlides.length,1);
+    if(s.hasAttribute('data-appendix')){var ai=appendixSlides.indexOf(s);return'A'+(ai+1)+' / A'+appendixSlides.length;}
+    return(mainSlides.indexOf(s)+1)+' / '+mainSlides.length;
+  }
+  function upC(){if(dCounter)dCounter.textContent=cText(ci);}
+  function goTo(i){
+    if(!allSlides.length)return;
+    ci=Math.max(0,Math.min(i,allSlides.length-1));
+    allSlides[ci].scrollIntoView({behavior:'smooth',block:'start'});upC();
+  }
+  function togFS(){
+    if(!document.fullscreenElement){document.documentElement.requestFullscreen();if(dFS)dFS.textContent='✕';}
+    else{document.exitFullscreen();if(dFS)dFS.textContent='⛶';}
+  }
+  function typFocus(){var el=document.activeElement;if(!el)return false;return el.isContentEditable||/INPUT|TEXTAREA|SELECT/.test(el.tagName);}
+  function enEdit(){
+    document.querySelectorAll(EDITABLE).forEach(function(el){if(el.closest('#deck-chrome'))return;el.setAttribute('contenteditable','true');el.setAttribute('spellcheck','false');});
+    document.body.classList.add('edit-mode');editOn=true;
+  }
+  function disEdit(){
+    document.querySelectorAll('[contenteditable="true"]').forEach(function(el){el.removeAttribute('contenteditable');el.removeAttribute('spellcheck');});
+    if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
+    document.body.classList.remove('edit-mode');editOn=false;
+  }
+
+  var actObs=new IntersectionObserver(function(entries){
+    var vis=entries.filter(function(e){return e.isIntersecting;}).sort(function(a,b){return b.intersectionRatio-a.intersectionRatio;});
+    if(!vis.length)return;ci=allSlides.indexOf(vis[0].target);upC();
+  },{threshold:[0.55,0.7,0.85]});
+  allSlides.forEach(function(s){actObs.observe(s);});
+
+  if(dPrev)dPrev.addEventListener('click',function(){if(!editOn)goTo(ci-1);});
+  if(dNext)dNext.addEventListener('click',function(){if(!editOn)goTo(ci+1);});
+  if(dFS)dFS.addEventListener('click',function(){if(!editOn)togFS();});
+  document.addEventListener('fullscreenchange',function(){if(!document.fullscreenElement&&dFS)dFS.textContent='⛶';});
+
+  document.addEventListener('keydown',function(e){
+    var nav=(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageDown'||e.key==='PageUp'||e.key==='Home'||e.key==='End'||e.key===' ');
+    if((e.key==='e'||e.key==='E')&&!typFocus()){e.preventDefault();editOn?disEdit():enEdit();return;}
+    if(e.key==='Escape'&&editOn){e.preventDefault();disEdit();return;}
+    if((e.key==='f'||e.key==='F')&&!editOn&&!typFocus()){e.preventDefault();togFS();return;}
+    if(editOn){if(nav&&!typFocus())e.preventDefault();return;}
+    if(typFocus())return;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){e.preventDefault();goTo(ci+1);return;}
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();goTo(ci-1);return;}
+    if(e.key==='Home'){e.preventDefault();goTo(0);return;}
+    if(e.key==='End'){e.preventDefault();goTo(allSlides.length-1);}
+  });
+  upC();
+});
+</script>
+</body>
+</html>
