@@ -57,14 +57,6 @@ The **Contract Owner** is the user who uploads a contract record to the platform
 - **Security & Identity:** Access must be gated via SSO with session timeouts for inactivity. Role boundaries must be enforced at the server API level, not merely obscured in the UI.
 - **Data Integrity:** The platform must maintain a permanently uneditable audit log across all roles.
 
-### Risks & Mitigations
-- **Risk:** Low user adoption if the system feels slower than email.
-  **Mitigation:** Provide a focused "Approver Inbox" sorted by urgency and fast Out-of-Office (OOO) delegation.
-- **Risk:** Integration failures with Palantir RAID drop critical governance data.
-  **Mitigation:** Implement robust queuing and retry mechanisms for all API calls; fallback alerts logged in the Admin audit trail.
-- **Risk:** "Shadow IT" redlining loses negotiation history.
-  **Mitigation:** Mandate metadata tagging and immutable audit logs to ensure the final uploaded version is indisputably locked, even if drafted externally.
-
 ---
 
 ## Delivery Plan: Eight Self-Contained Capabilities
